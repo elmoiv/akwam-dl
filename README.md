@@ -2,7 +2,7 @@
 Smart Akwam.com CLI downloader for movies and series
 
 ## Requirements
-akwam-dl.py requires `requests` module.
+`akwam-dl.py` requires `requests` module.
 
 To install `requests`:
 
