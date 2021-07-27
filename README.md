@@ -1,6 +1,7 @@
 # akwam-dl
 Smart Akwam.com CLI downloader for movies and series
 
+![](https://github.com/elmoiv/akwam-dl/blob/main/preview.gif)
 ## Requirements
 `akwam-dl.py` requires `requests` module.
 
@@ -12,5 +13,3 @@ To install `requests`:
 ```
 python akwam-dl.py
 ```
-
-** *This repository has only compiled files, no source code is present.*
