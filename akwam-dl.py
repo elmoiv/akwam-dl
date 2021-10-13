@@ -30,7 +30,7 @@ class Akwam:
     def load(self):
         self.cur_page = get(self.cur_url)
         self.parse(
-            r'tab-content quality.*?a href="https?://(re\.two\.re/link/\d+)"',
+            r'tab-content quality.*?a href="https?://(go\.akwam\.rest/link/\d+)"',
             no_multi_line=True
         )
         i = 0
@@ -145,10 +145,13 @@ def main():
 
         print('\n>> Your Direct URL:', API.dl_url)
 
-        if not input('[+] Press Enter to download or anything to skip: '):
+        if not input('\n[+] Press Enter to download or anything to skip: '):
             API.download()
         
-        input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
+        try:
+            input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
+        except KeyboardInterrupt:
+            exit(0)
         os.system('CLS')
 
 if __name__ == '__main__':
