@@ -60,7 +60,6 @@ class Akwam:
     def get_direct_url(self, quality='720p', fix_asia=False):
         print('\n>> Solving shortened URL...')
         self.cur_page = get(HTTP + self.qualities[quality])
-        print(HTTP + self.qualities[quality])
         self.parse(r'(akwam.[a-z]+/download/.*?)"')
 
         # if fix_asia:
