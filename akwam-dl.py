@@ -3,7 +3,7 @@ from requests import get
 
 HTTP = 'https://'
 YOUR_CHOICE = '\n[+] Your Choice: '
-DL_URL_RGX = r'https?://(noon\.khsm\.io/link/\d+)'
+DL_URL_RGX = r'https?://(redirect\.khsm\.io/link/\d+)'
 
 class Akwam:
     def __init__(self, url):
@@ -60,10 +60,11 @@ class Akwam:
     def get_direct_url(self, quality='720p', fix_asia=False):
         print('\n>> Solving shortened URL...')
         self.cur_page = get(HTTP + self.qualities[quality])
+        print(HTTP + self.qualities[quality])
         self.parse(r'(akwam.[a-z]+/download/.*?)"')
 
-        if fix_asia:
-            self.parsed[0] = self.parsed[0].replace('.asia', '.cz')
+        # if fix_asia:
+        #     self.parsed[0] = self.parsed[0].replace('.asia', '.cz')
 
         print('>> Getting Direct URL...')
         self.cur_page = get(HTTP + self.parsed[0])
@@ -97,7 +98,7 @@ def main():
     while True:
         print(
     '''
-     █████╗ ██╗  ██╗██╗    ██╗ █████╗ ███╗   ███╗      ██████╗ ██╗   v1.1
+     █████╗ ██╗  ██╗██╗    ██╗ █████╗ ███╗   ███╗      ██████╗ ██╗   v1.2
     ██╔══██╗██║ ██╔╝██║    ██║██╔══██╗████╗ ████║      ██╔══██╗██║       
     ███████║█████╔╝ ██║ █╗ ██║███████║██╔████╔██║█████╗██║  ██║██║       
     ██╔══██║██╔═██╗ ██║███╗██║██╔══██║██║╚██╔╝██║╚════╝██║  ██║██║       
@@ -109,7 +110,7 @@ def main():
         )
 
         print('>> Resolving Akwam URL...\n')
-        API = Akwam('https://eg.akwam.cz/')
+        API = Akwam('https://on.akwam.cx/')
 
         _type = input('[+] Select Type:\n [1] Movies\n [2] Series\nType: ')
         API.type = ['movie', 'series'][int(_type) - 1]
@@ -138,11 +139,11 @@ def main():
         API.show_qualities()
         result = input(YOUR_CHOICE)
 
-        try:
-            API.get_direct_url([*API.qualities.keys()][int(result) - 1])
-        except:
-            print('\n>> Server Down, Trying different method...')
-            API.get_direct_url([*API.qualities.keys()][int(result) - 1], True)
+        # try:
+        API.get_direct_url([*API.qualities.keys()][int(result) - 1])
+        # except:
+        #     print('\n>> Server Down, Trying different method...')
+        #     API.get_direct_url([*API.qualities.keys()][int(result) - 1], True)
 
         print('\n>> Your Direct URL:', API.dl_url)
 
