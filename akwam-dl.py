@@ -107,7 +107,9 @@ class Akwam:
     def show_qualities(self):
         print('>> Choose Quality:\n')
         for n, quality in enumerate(self.qualities):
-            print(f'  [{n + 1}] {quality}')
+            print(
+                f'  {("[" + str(n + 1) + "] " + quality).ljust(11)} -> {self.parsed[n]}'
+            )
 
     def recursive_episodes(self):
         series_episodes = []
