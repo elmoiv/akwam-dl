@@ -165,7 +165,12 @@ def main():
             API.fetch_episodes()
             API.show_episodes()
             result = input(YOUR_CHOICE)
-            API.select(int(result), True)
+            if result == '-1':
+                API.recursive_episodes()
+                input('>> Done, press anything to continue...')
+                continue
+            else:
+                API.select(int(result), True)
 
         print('\n>> Fetching Qualities...\n')
         API.load()
@@ -181,8 +186,10 @@ def main():
 
         print('\n>> Your Direct URL:', API.dl_url)
 
-        if not input('\n[+] Press Enter to download or anything to skip: '):
+        if not input('\n[+] Press Enter to download or anything to copy and skip: '):
             API.download()
+        else:
+            API.copy_url()
         
         try:
             input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
