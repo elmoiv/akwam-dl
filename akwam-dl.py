@@ -1,9 +1,14 @@
 import re, os
 from requests import get
 
+IS_TERMUX = 'TERMUX_VERSION' in os.environ
 HTTP = 'https://'
 YOUR_CHOICE = '\n[+] Your Choice: '
-DL_URL_RGX = r'https?://(redirect\.khsm\.io/link/\d+)'
+RGX_DL_URL = r'https?://(\w*\.*\w+\.\w+/link/\d+)'
+RGX_SHORTEN_URL = r'https?://(\w*\.*\w+\.\w+/download/.*?)"'
+RGX_DIRECT_URL = r'([a-z0-9]{4,}\.\w+\.\w+/download/.*?)"'
+RGX_QUALITY_TAG = rf'tab-content quality.*?a href="{RGX_DL_URL}"'
+RGX_SIZE_TAG = r'font-size-14 mr-auto">([0-9.MGB ]+)</'
 
 class Akwam:
     def __init__(self, url):
@@ -30,15 +35,13 @@ class Akwam:
 
     def load(self):
         self.cur_page = get(self.cur_url)
-        self.parse(
-            r'tab-content quality.*?a href="' + DL_URL_RGX + r'"',
-            no_multi_line=True
-        )
+        self.parse(RGX_QUALITY_TAG, no_multi_line=True)
         i = 0
         for q in ['1080p', '720p', '480p']:
-            if f'">{q}</' in self.cur_page.text:
+            if f'>{q}</' in self.cur_page.text:
                 self.qualities[q] = self.parsed[i]
                 i += 1
+        self.parse(RGX_SIZE_TAG, no_multi_line=True)
 
     def search(self, query, page=1):
         query = query.replace(' ', '+')
@@ -57,22 +60,35 @@ class Akwam:
                 for url in self.parsed[::-1]
         }
     
-    def get_direct_url(self, quality='720p', fix_asia=False):
+    def get_direct_url(self, quality='720p'):
         print('\n>> Solving shortened URL...')
         self.cur_page = get(HTTP + self.qualities[quality])
-        self.parse(r'(akwam.[a-z]+/download/.*?)"')
-
-        # if fix_asia:
-        #     self.parsed[0] = self.parsed[0].replace('.asia', '.cz')
+        self.parse(RGX_SHORTEN_URL)
 
         print('>> Getting Direct URL...')
         self.cur_page = get(HTTP + self.parsed[0])
-        self.parse(r'([a-z0-9]{4,}\.akwam\.[a-z]+/download/.*?)"')
+
+        if HTTP + self.parsed[0] != self.cur_page.url:
+            print('>> Fix non-direct URL...')
+            self.cur_page = get(self.cur_page.url)
+        
+        # open('e.html', 'w', encoding='utf-8').write(self.cur_page.content.decode())
+
+        self.parse(RGX_DIRECT_URL)
 
         self.dl_url = HTTP + self.parsed[0]
 
     def download(self):
-        os.system(f'start "" "{self.dl_url}"')
+        if IS_TERMUX:
+            os.system(f'termux-open-url "{self.dl_url}"')
+        else:
+            __import__('webbrowser').open(self.dl_url)
+    
+    def copy_url(self):
+        if IS_TERMUX:
+            os.system(f'termux-clipboard-set "{self.dl_url}"')
+        else:
+            __import__('pyperclip').copy(self.dl_url)
     
     def show_results(self):
         if not self.results:
@@ -93,11 +109,25 @@ class Akwam:
         for n, quality in enumerate(self.qualities):
             print(f'  [{n + 1}] {quality}')
 
+    def recursive_episodes(self):
+        series_episodes = []
+        for name, url in self.results.items():
+            print(f'\n>>> Getting episode {name}...')
+            self.cur_url = url
+            self.load()
+            quality = [*self.qualities][0]
+            self.get_direct_url(quality)
+            series_episodes.append(self.dl_url)
+
+        print('>>> All episodes URLs:')
+        for url in series_episodes:
+            print(url)
+
 def main():
     while True:
         print(
     '''
-     █████╗ ██╗  ██╗██╗    ██╗ █████╗ ███╗   ███╗      ██████╗ ██╗   v1.2
+     █████╗ ██╗  ██╗██╗    ██╗ █████╗ ███╗   ███╗      ██████╗ ██╗   v2.0
     ██╔══██╗██║ ██╔╝██║    ██║██╔══██╗████╗ ████║      ██╔══██╗██║       
     ███████║█████╔╝ ██║ █╗ ██║███████║██╔████╔██║█████╗██║  ██║██║       
     ██╔══██║██╔═██╗ ██║███╗██║██╔══██║██║╚██╔╝██║╚════╝██║  ██║██║       
@@ -109,7 +139,7 @@ def main():
         )
 
         print('>> Resolving Akwam URL...\n')
-        API = Akwam('https://on.akwam.cx/')
+        API = Akwam('https://akwam.im/')
 
         _type = input('[+] Select Type:\n [1] Movies\n [2] Series\nType: ')
         API.type = ['movie', 'series'][int(_type) - 1]
@@ -120,7 +150,7 @@ def main():
         API.show_results()
         if not API.results:
             input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
-            os.system('CLS')
+            os.system('clear' if IS_TERMUX else 'CLS')
             continue
         result = input(YOUR_CHOICE)
         API.select(int(result), True)
@@ -138,11 +168,12 @@ def main():
         API.show_qualities()
         result = input(YOUR_CHOICE)
 
-        # try:
-        API.get_direct_url([*API.qualities.keys()][int(result) - 1])
-        # except:
-        #     print('\n>> Server Down, Trying different method...')
-        #     API.get_direct_url([*API.qualities.keys()][int(result) - 1], True)
+        try:
+            API.get_direct_url([*API.qualities.keys()][int(result) - 1])
+        except Exception as e:
+            print(e)
+            print('\n>> Server Down!')
+            exit(0)
 
         print('\n>> Your Direct URL:', API.dl_url)
 
@@ -153,7 +184,7 @@ def main():
             input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
         except KeyboardInterrupt:
             exit(0)
-        os.system('CLS')
+        os.system('clear' if IS_TERMUX else 'CLS')
 
 if __name__ == '__main__':
     main()
