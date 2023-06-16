@@ -112,12 +112,15 @@ class Akwam:
     def recursive_episodes(self):
         series_episodes = []
         for name, url in self.results.items():
-            print(f'\n>>> Getting episode {name}...')
-            self.cur_url = url
-            self.load()
-            quality = [*self.qualities][0]
-            self.get_direct_url(quality)
-            series_episodes.append(self.dl_url)
+            try:
+                print(f'\n>>> Getting episode {name}...')
+                self.cur_url = url
+                self.load()
+                quality = [*self.qualities][0]
+                self.get_direct_url(quality)
+                series_episodes.append(self.dl_url)
+            except Exception as e:
+                print('>> Error Caught ->', e)
 
         print('>>> All episodes URLs:')
         for url in series_episodes:
@@ -150,7 +153,7 @@ def main():
         API.show_results()
         if not API.results:
             input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
-            os.system('clear' if IS_TERMUX else 'CLS')
+            os.system('clear||CLS')
             continue
         result = input(YOUR_CHOICE)
         API.select(int(result), True)
@@ -171,9 +174,8 @@ def main():
         try:
             API.get_direct_url([*API.qualities.keys()][int(result) - 1])
         except Exception as e:
-            print(e)
-            print('\n>> Server Down!')
-            exit(0)
+            print('\n>> Error Caught ->', e)
+            continue
 
         print('\n>> Your Direct URL:', API.dl_url)
 
@@ -184,7 +186,7 @@ def main():
             input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
         except KeyboardInterrupt:
             exit(0)
-        os.system('clear' if IS_TERMUX else 'CLS')
+        os.system('clear||CLS')
 
 if __name__ == '__main__':
     main()
