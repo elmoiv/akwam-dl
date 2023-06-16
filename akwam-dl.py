@@ -100,7 +100,7 @@ class Akwam:
             print(f'  [{n + 1}] {name}')
     
     def show_episodes(self):
-        print('>> Choose Episode:\n')
+        print('>> Choose Episode (Enter -1 to get all episodes at once):\n')
         for n, episode in enumerate(self.results):
             print(f'  [{n + 1}] {episode}')
 
