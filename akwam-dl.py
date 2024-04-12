@@ -144,7 +144,7 @@ def main():
         )
 
         print('>> Resolving Akwam URL...\n')
-        API = Akwam('https://akwam.im/')
+        API = Akwam('https://ak.sv/')
 
         _type = input('[+] Select Type:\n [1] Movies\n [2] Series\nType: ')
         API.type = ['movie', 'series'][int(_type) - 1]
