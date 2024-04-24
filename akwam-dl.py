@@ -9,8 +9,11 @@ RGX_SHORTEN_URL = r'https?://(\w*\.*\w+\.\w+/download/.*?)"'
 RGX_DIRECT_URL = r'([a-z0-9]{4,}\.\w+\.\w+/download/.*?)"'
 RGX_QUALITY_TAG = rf'tab-content quality.*?a href="{RGX_DL_URL}"'
 RGX_SIZE_TAG = r'font-size-14 mr-auto">([0-9.MGB ]+)</'
+WATCH_HTML_CMD = 'data:text/html,<html><body><video controls><source src="{}" type="video/mp4"></video></body></html>'
+
 
 class Akwam:
+
     def __init__(self, url):
         url = get(url).url
         self.url = [url, url[:-1]][url[-1] == '/']
@@ -45,7 +48,8 @@ class Akwam:
 
     def search(self, query, page=1):
         query = query.replace(' ', '+')
-        self.cur_page = get(f'{self.search_url}{query}&section={self.type}&page={page}')
+        self.cur_page = get(
+            f'{self.search_url}{query}&section={self.type}&page={page}')
         self.parse(rf'({self.url}/{self.type}/\d+/.*?)"')
         self.results = {
             url.split('/')[-1].replace('-', ' ').title(): url \
@@ -59,9 +63,9 @@ class Akwam:
             url.split('/')[-1].replace('-', ' ').title(): url \
                 for url in self.parsed[::-1]
         }
-    
+
     def get_direct_url(self, quality='720p'):
-        print('\n>> Solving shortened URL...')
+        print('>> Solving shortened URL...')
         self.cur_page = get(HTTP + self.qualities[quality])
         self.parse(RGX_SHORTEN_URL)
 
@@ -71,25 +75,15 @@ class Akwam:
         if HTTP + self.parsed[0] != self.cur_page.url:
             print('>> Fix non-direct URL...')
             self.cur_page = get(self.cur_page.url)
-        
-        # open('e.html', 'w', encoding='utf-8').write(self.cur_page.content.decode())
+
+        # open('e.html', 'w',
+        #      encoding='utf-8').write(self.cur_page.content.decode())
 
         self.parse(RGX_DIRECT_URL)
+        # print(self.parsed)
 
         self.dl_url = HTTP + self.parsed[0]
 
-    def download(self):
-        if IS_TERMUX:
-            os.system(f'termux-open-url "{self.dl_url}"')
-        else:
-            __import__('webbrowser').open(self.dl_url)
-    
-    def copy_url(self):
-        if IS_TERMUX:
-            os.system(f'termux-clipboard-set "{self.dl_url}"')
-        else:
-            __import__('pyperclip').copy(self.dl_url)
-    
     def show_results(self):
         if not self.results:
             print('>> Found Nothing!')
@@ -98,7 +92,7 @@ class Akwam:
         print(f'>> Choose {self.type.title()}:\n')
         for n, name in enumerate(self.results):
             print(f'  [{n + 1}] {name}')
-    
+
     def show_episodes(self):
         print('>> Choose Episode (Enter -1 to get all episodes at once):\n')
         for n, episode in enumerate(self.results):
@@ -128,10 +122,10 @@ class Akwam:
         for url in series_episodes:
             print(url)
 
+
 def main():
     while True:
-        print(
-    '''
+        print('''
      █████╗ ██╗  ██╗██╗    ██╗ █████╗ ███╗   ███╗      ██████╗ ██╗   v2.0
     ██╔══██╗██║ ██╔╝██║    ██║██╔══██╗████╗ ████║      ██╔══██╗██║       
     ███████║█████╔╝ ██║ █╗ ██║███████║██╔████╔██║█████╗██║  ██║██║       
@@ -140,22 +134,21 @@ def main():
     ╚═╝  ╚═╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝     ╚═╝      ╚═════╝ ╚══════╝  
                                                     www.github.com/elmoiv
                 
-    '''
-        )
+    ''')
 
         print('>> Resolving Akwam URL...\n')
         API = Akwam('https://ak.sv/')
 
         _type = input('[+] Select Type:\n [1] Movies\n [2] Series\nType: ')
         API.type = ['movie', 'series'][int(_type) - 1]
-        
+
         query = input('\n[+] Search for: ')
         print(f'\n>> Searching for "{query}"...\n')
         API.search(query)
         API.show_results()
         if not API.results:
             input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
-            os.system('clear||CLS')
+            os.system('clear')
             continue
         result = input(YOUR_CHOICE)
         API.select(int(result), True)
@@ -168,6 +161,7 @@ def main():
             if result == '-1':
                 API.recursive_episodes()
                 input('>> Done, press anything to continue...')
+                os.system('clear')
                 continue
             else:
                 API.select(int(result), True)
@@ -179,23 +173,24 @@ def main():
         result = input(YOUR_CHOICE)
 
         try:
-            API.get_direct_url([*API.qualities.keys()][int(result) - 1])
+            API.get_direct_url([*API.qualities.keys()
+                                ][int(result.replace('w', '')) - 1])
         except Exception as e:
             print('\n>> Error Caught ->', e)
             continue
 
         print('\n>> Your Direct URL:', API.dl_url)
+        if 'w' in result:
+            print(
+                '\n>> Copy this command and paste it in chrome url text box:')
+            print(WATCH_HTML_CMD.format(API.dl_url))
 
-        if not input('\n[+] Press Enter to download or anything to copy and skip: '):
-            API.download()
-        else:
-            API.copy_url()
-        
         try:
             input('\n[!] Press Enter to Try Again or Ctrl+C to exit:')
         except KeyboardInterrupt:
             exit(0)
-        os.system('clear||CLS')
+        os.system('clear')
+
 
 if __name__ == '__main__':
     main()
